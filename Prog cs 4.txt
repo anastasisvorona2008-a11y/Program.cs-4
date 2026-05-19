@@ -1,0 +1,295 @@
+using System;
+using System.Collections.Generic;
+
+namespace ConsoleAppLab4
+{
+    // ЗАВДАННЯ 1: КЛАСИ ТОЧКА, ВІДРІЗОК, КВАДРАТ
+
+    // Клас ТОЧКА
+    public class Point
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+
+        public Point(double x, double y)
+        {
+            X = x;
+            Y = y;
+            Console.WriteLine($"[Point]: Створено точку ({X}; {Y})");
+        }
+
+        public override bool Equals(object obj)
+        {
+            Console.WriteLine("[Point]: Виклик Equals");
+            if (obj is Point p)
+            {
+                return X == p.X && Y == p.Y;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            Console.WriteLine("[Point]: Виклик GetHashCode");
+            return HashCode.Combine(X, Y);
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("[Point]: Виклик ToString");
+            return $"Точка({X}; {Y})";
+        }
+    }
+
+    // --- Клас ВІДРІЗОК ---
+    public class Segment
+    {
+        public Point Start { get; set; }
+        public Point End { get; set; }
+
+        public Segment(Point start, Point end)
+        {
+            Start = start;
+            End = end;
+            Console.WriteLine($"[Segment]: Створено відрізок від {Start} до {End}");
+        }
+
+        public double GetLength()
+        {
+            Console.WriteLine("[Segment]: Обчислення довжини відрізка");
+            return Math.Sqrt(Math.Pow(End.X - Start.X, 2) + Math.Pow(End.Y - Start.Y, 2));
+        }
+
+        public override bool Equals(object obj)
+        {
+            Console.WriteLine("[Segment]: Виклик Equals");
+            if (obj is Segment s)
+            {
+                return Start.Equals(s.Start) && End.Equals(s.End);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            Console.WriteLine("[Segment]: Виклик GetHashCode");
+            return HashCode.Combine(Start, End);
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("[Segment]: Виклик ToString");
+            return $"Відрізок[{Start} - {End}], Довжина: {GetLength():F2}";
+        }
+    }
+
+    // Клас КВАДРАТ
+    public class Square
+    {
+        private Point _topLeft;
+        private Segment _side;
+        private double _angle; 
+        private string _color;
+
+        public Square(Point topLeft, Segment side, string color = "Червоний")
+        {
+            _topLeft = topLeft;
+            _side = side;
+            _color = color;
+            _angle = 0;
+            Console.WriteLine($"[Square]: Створено квадрат. Сторона: {_side.GetLength():F2}, Колір: {_color}");
+        }
+
+        public void SetSize(double newSize)
+        {
+            Console.WriteLine($"[Square]: Зміна розміру сторони на {newSize}");
+            _side.End = new Point(_side.Start.X + newSize, _side.Start.Y);
+        }
+
+        public void Stretch(double coefficient)
+        {
+            Console.WriteLine($"[Square]: Розтягнення з коефіцієнтом {coefficient}");
+            double currentSize = _side.GetLength();// Метод дізнається поточну довжину сторони, множить на коефіцієнт, оновлює розмір
+            SetSize(currentSize * coefficient);
+        }
+
+        public void Compress(double coefficient)
+        {
+            Console.WriteLine($"[Square]: Стиснення з коефіцієнтом {coefficient}");
+            double currentSize = _side.GetLength();// Поточна довжина ділиться на коефіцієнт
+            SetSize(currentSize / coefficient);
+        }
+
+        public void Rotate(double degrees)
+        {
+            _angle = (_angle + degrees) % 360;// + нові градуси до початкового кута 
+            Console.WriteLine($"[Square]: Поворот на {degrees}° (Поточний кут: {_angle}°)");
+        }
+
+        public void ChangeColor(string newColor)
+        {
+            Console.WriteLine($"[Square]: Зміна кольору з {_color} на {newColor}");
+            _color = newColor;
+        }
+
+        public override bool Equals(object obj)
+        {
+            Console.WriteLine("[Square]: Виклик Equals");
+            if (obj is Square s)
+            {
+                return _topLeft.Equals(s._topLeft) && _side.Equals(s._side) && _color == s._color && _angle == s._angle;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            Console.WriteLine("[Square]: Виклик GetHashCode");
+            return HashCode.Combine(_topLeft, _side, _angle, _color);
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("[Square]: Виклик ToString");
+            return $"Квадрат: Позиція={_topLeft}, Сторона={_side.GetLength():F2}, Кут={_angle}°, Колір={_color}";
+        }
+    }
+
+    // ЗАВДАННЯ 2: КІНОТЕАТР ТА КВИТКИ
+
+    // Базовий клас КВИТОК 
+    public class Ticket
+    {
+        private readonly string _code; // Поле закрите для захисту данних, зміну можна аписати лише один раз
+        private string _sessionName;
+        private double _price;
+
+        private static int _ticketCount = 0;
+
+        public double Price => _price;
+
+        public Ticket(string code, string sessionName, double price)
+        {
+            // Пеціальний метод класу, автоматично викликається при створені нового обєкут
+            _code = code;
+            _sessionName = sessionName;
+            _price = price;
+            _ticketCount++; 
+        }
+
+        public static int GetTicketCount()
+        {
+            return _ticketCount;// Метод який повертає результат
+        }
+
+        public virtual string GetInfo()
+        {
+            // метод щоб вивести всю інформцію про квиток 
+            return $"Код: {_code} | Сеанс: \"{_sessionName}\" | Ціна: {_price} грн";
+        }
+
+        public bool IsExpensive()
+        {
+            return _price > 250;
+        }
+    }
+
+    //  Похідний клас ЗВИЧАЙНИЙ КВИТОК 
+    public class RegularTicket : Ticket
+    {
+        private int _hallNumber; 
+
+        public RegularTicket(string code, string sessionName, double price, int hallNumber) 
+            : base(code, sessionName, price) // Щоб задати загальні властивості квитка, і власну уніклаьну властивість
+        {
+            _hallNumber = hallNumber;
+        }
+          // Перевизначений метод 
+        public override string GetInfo()
+        {
+            return base.GetInfo() + $" | Тип: Звичайний [Зал: {_hallNumber}]";
+        }
+    }
+
+    // Похідний клас VIP КВИТОК
+    public class VipTicket : Ticket
+    {
+        private string _seatInfo; 
+
+        public VipTicket(string code, string sessionName, double price, string seatInfo) 
+            : base(code, sessionName, price) // Щоб задати загальні властивості квитка, і власну уніклаьну властивість
+        {
+        
+            _seatInfo = seatInfo;
+        }
+           // Перевизначений метод 
+        public override string GetInfo()
+        {
+            return base.GetInfo() + $" | Тип: VIP [Місце: {_seatInfo}]";
+        }
+    }
+
+    // ТОЧКА ВХОДУ (ГОЛОВНИЙ КЛАС ПРОГРАМИ)
+    class Program
+    {
+        static void Main(string[] args) // Перемикач який починає виконувати код рядок за рядком, в якому об'єкти квитків, рахуємться загальна виручка та виводятьяс результати на екран.
+        {
+            // Налаштування консолі для коректного відображення кирилиці
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            // ТЕСТУВАННЯ ЗАВДАННЯ 1 
+            Console.WriteLine("=== ЗАВДАННЯ 1: Геометрія ===");
+            Point p1 = new Point(0, 4);
+            Point p2 = new Point(4, 4);
+            Segment sideSegment = new Segment(p1, p2);
+            
+            Square square = new Square(p1, sideSegment, "Червоний");
+            Console.WriteLine(square.ToString());
+
+            // Модифікація квадрата
+            square.Stretch(2);
+            square.Rotate(45);
+            square.ChangeColor("Синій");
+            Console.WriteLine(square.ToString());
+            
+            Console.WriteLine("\n" + new string('=', 50) + "\n");
+
+            // ТЕСТУВАННЯ ЗАВДАННЯ 2 
+            Console.WriteLine("ЗАВДАННЯ 2: Кінотеатр");
+            
+            // Поліморфний список квитків (базового типу Ticket)
+            List<Ticket> tickets = new List<Ticket>()
+            {
+                new RegularTicket("REG-101", "Бетмен", 180, 3),
+                new RegularTicket("REG-102", "Дюна", 260, 1),
+                new VipTicket("VIP-001", "Матриця", 450, "Ряд 7, Місце 10"),
+                new VipTicket("VIP-002", "Дюна", 500, "Ряд 7, Місце 11")
+            };
+
+            double totalRevenue = 0;
+            int expensiveCount = 0;
+
+            Console.WriteLine("\n--- Інформація про придбані квитки ---");
+            foreach (var ticket in tickets)
+            {
+                // Поліморфний виклик override методу GetInfo()
+                // виклик перевизначеного віртуального методу
+                Console.WriteLine(ticket.GetInfo());
+                
+                totalRevenue += ticket.Price;
+
+                if (ticket.IsExpensive())
+                {
+                    expensiveCount++;
+                }
+            }
+
+            Console.WriteLine("\n--- Статистика кінотеатру ---");
+            Console.WriteLine($"Загальна кількість створених квитків (static лічильник): {Ticket.GetTicketCount()}");
+            Console.WriteLine($"Загальна виручка: {totalRevenue} грн");
+            Console.WriteLine($"Кількість \"дорогих\" квитків (>250 грн): {expensiveCount}");
+
+            Console.ReadLine();
+        }
+    }
+}
